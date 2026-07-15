@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office AI Planner Pro - Ultimate Fixed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f8fafc; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        input[type="number"], select { border: 1px solid #cbd5e1; padding: 8px 10px; border-radius: 8px; width: 100%; font-size: 0.95rem; }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px #eff6ff; }
+        input:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+        label { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block; }
+        .result-val { color: #1d4ed8; font-weight: bold; font-size: 1.25rem; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="p-3 md:p-6 text-slate-800">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-center text-slate-900 mb-2">Smart Office Layout Planner</h1>
+        <p class="text-center text-slate-500 mb-8 text-sm">ครบทุกฟังก์ชัน: แก้ขนาดห้องอิสระ, ระบุ Lux, ภาพตัดขวาง, แอร์, โปรเจคเตอร์</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 space-y-4 no-print">
+                <div class="card p-5">
+                    <h2 class="text-lg font-bold mb-4 text-slate-900 flex items-center gap-2">👥 พนักงาน & อุปกรณ์</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label>จำนวนคน (คน)</label><input type="number" id="staffCount" value="8" min="1" oninput="updateAll()"></div>
+                        <div><label>Notebook (เครื่อง)</label><input type="number" id="nbCount" value="4" min="0" oninput="updateAll()"></div>
+                        <div><label>Computer (ชุด)</label><input type="number" id="pcCount" value="4" min="0" oninput="updateAll()"></div>
+                        <div><label>Printer (เครื่อง)</label><input type="number" id="printerCount" value="1" min="0" oninput="updateAll()"></div>
+                    </div>
+                </div>
+
+                <div class="card p-5">
+                    <h2 class="text-lg font-bold mb-4 text-slate-900 flex items-center gap-2">📐 ขนาดและรูปแบบห้อง</h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label>รูปแบบการจัดโต๊ะ</label>
+                                <select id="deskLayout" onchange="updateAll()">
+                                    <option value="face" selected>หันหน้าชนกัน (Face-to-Face)</option>
+                                    <option value="row">แถวเรียงทางเดียวกัน (Rows)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="mb-0 text-blue-800 flex items-center">
+                                    <input type="checkbox" id="manualSizeToggle" class="mr-2" onchange="toggleManualSize(); updateAll()">
+                                    กำหนดขนาดห้องเอง (เมตร)
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-xs">ความกว้าง (W)</label><input type="number" id="customW" value="0" step="0.1" disabled oninput="updateAll()"></div>
+                                <div><label class="text-xs">ความยาว (L)</label><input type="number" id="customL" value="0" step="0.1" disabled oninput="updateAll()"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label>ความสูงฝ้า (ม.)</label><input type="number" id="height" value="2.8" step="0.1" oninput="updateAll()"></div>
+                            <div><label>ทิศรับแดด</label>
+                                <select id="sunDir" onchange="updateAll()">
+                                    <option value="700">เหนือ/ออก</option>
+                                    <option value="900" selected>ใต้ (รับแดด)</option>
+                                    <option value="1000">ตะวันตก (ร้อน)</option>
+                                </select>
+                            </div>
+                            <div><label>ประตู</label><select id="doorPos" onchange="updateAll()"><option value="bottom" selected>ล่าง</option><option value="top">บน</option><option value="left">ซ้าย</option><option value="right">ขวา</option></select></div>
+                            <div><label>หน้าต่าง</label><select id="winPos" onchange="updateAll()"><option value="top" selected>บน</option><option value="bottom">ล่าง</option><option value="left">ซ้าย</option><option value="right">ขวา</option><option value="none">ไม่มี</option></select></div>
+                            
+                            <div class="col-span-2 flex items-center pt-2 border-t mt-2 border-slate-100">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="showProjector" class="sr-only peer" checked onchange="updateAll()">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <span class="ml-2 text-sm font-medium text-slate-600">ติดตั้งจอ Presentation</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 space-y-6">
+                <div class="card p-4 grid grid-cols-2 md:grid-cols-5 gap-3 bg-white">
+                    <div class="text-center p-2 border-r border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">พื้นที่ห้อง</p>
+                        <p class="result-val text-blue-600 text-lg" id="roomSizeRes">- ตร.ม.</p>
+                    </div>
+                    <div class="text-center p-2 border-r border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">แอร์ (BTU)</p>
+                        <p class="result-val text-emerald-600 text-lg" id="btuRes">-</p>
+                    </div>
+                    <div class="text-center p-2 border-r border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">โคมไฟ</p>
+                        <p class="result-val text-amber-500 text-lg" id="lightRes">-</p>
+                    </div>
+                    <div class="text-center p-2 border-r border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">แสงสว่างโต๊ะ</p>
+                        <p class="result-val text-purple-600 text-lg" id="luxRes">- Lux</p>
+                    </div>
+                    <div class="text-center p-2">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">ค่าไฟ/เดือน</p>
+                        <p class="result-val text-rose-500 text-lg" id="energyRes">- ฿</p>
+                    </div>
+                </div>
+
+                <div class="card p-5 bg-white">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 border-b pb-4">
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="switchTab('plan')" id="btn-tab-plan" class="px-4 py-2 font-bold text-sm rounded-lg bg-blue-600 text-white shadow-sm">
+                                📐 แปลนห้อง
+                            </button>
+                            <button onclick="switchTab('lighting')" id="btn-tab-lighting" class="px-4 py-2 font-bold text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">
+                                💡 แปลนไฟ & Lux
+                            </button>
+                            <button onclick="switchTab('elevation')" id="btn-tab-elevation" class="px-4 py-2 font-bold text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">
+                                🏢 ภาพตัดขวาง
+                            </button>
+                        </div>
+                        <div class="flex gap-2 no-print self-end">
+                            <button onclick="downloadOutput()" class="bg-slate-800 text-white text-xs px-3 py-2 rounded-lg hover:bg-black transition">บันทึกรูปภาพ</button>
+                        </div>
+                    </div>
+
+                    <div id="exportContainer" class="p-4 bg-slate-50 border border-slate-200 rounded-xl overflow-auto flex flex-col items-center min-h-[500px]">
+                        <div id="view-plan" class="w-full flex justify-center"></div>
+                        <div id="view-lighting" class="w-full hidden flex flex-col items-center"></div>
+                        <div id="view-elevation" class="w-full hidden flex flex-col items-center"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'plan';
+
+        function toggleManualSize() {
+            const isManual = document.getElementById('manualSizeToggle').checked;
+            document.getElementById('customW').disabled = !isManual;
+            document.getElementById('customL').disabled = !isManual;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const btnPlan = document.getElementById('btn-tab-plan');
+            const btnLight = document.getElementById('btn-tab-lighting');
+            const btnElev = document.getElementById('btn-tab-elevation');
+            
+            const viewPlan = document.getElementById('view-plan');
+            const viewLight = document.getElementById('view-lighting');
+            const viewElev = document.getElementById('view-elevation');
+
+            btnPlan.className = btnLight.className = btnElev.className = "px-4 py-2 font-bold text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200";
+            viewPlan.classList.add('hidden'); viewLight.classList.add('hidden'); viewElev.classList.add('hidden');
+
+            if (tab === 'plan') {
+                btnPlan.className = "px-4 py-2 font-bold text-sm rounded-lg bg-blue-600 text-white shadow-sm";
+                viewPlan.classList.remove('hidden');
+            } else if (tab === 'lighting') {
+                btnLight.className = "px-4 py-2 font-bold text-sm rounded-lg bg-amber-500 text-white shadow-sm";
+                viewLight.classList.remove('hidden');
+            } else if (tab === 'elevation') {
+                btnElev.className = "px-4 py-2 font-bold text-sm rounded-lg bg-emerald-600 text-white shadow-sm";
+                viewElev.classList.remove('hidden');
+            }
+        }
+
+        function updateAll() {
+            let staff = parseInt(document.getElementById('staffCount').value) || 1;
+            staff = Math.max(1, staff); 
+            const nb = parseInt(document.getElementById('nbCount').value) || 0;
+            const pc = parseInt(document.getElementById('pcCount').value) || 0;
+            const printer = parseInt(document.getElementById('printerCount').value) || 0;
+            
+            const deskLayout = document.getElementById('deskLayout').value;
+            const doorPos = document.getElementById('doorPos').value;
+            const winPos = document.getElementById('winPos').value;
+            const sunFactor = parseFloat(document.getElementById('sunDir').value);
+            const ceilingH = parseFloat(document.getElementById('height').value) || 2.8;
+            const hasProjector = document.getElementById('showProjector').checked;
+            
+            // 1. คำนวณ Layout
+            const deskW = 1.2, deskL = 0.6, gapX = 0.8, gapY = 1.2;  
+            const cols = Math.ceil(Math.sqrt(staff));
+            const rows = Math.ceil(staff / cols);
+
+            const workZoneW = (cols * deskW) + (cols > 1 ? (cols - 1) * gapX : 0);
+            let workZoneL = 0;
+            if (deskLayout === 'face') {
+                const pods = Math.ceil(rows / 2);
+                workZoneL = (pods * (2 * deskL)) + (pods > 1 ? (pods - 1) * gapY : 0);
+                if (rows % 2 !== 0) workZoneL -= deskL; 
+            } else {
+                workZoneL = (rows * deskL) + (rows > 1 ? (rows - 1) * gapY : 0);
+            }
+
+            // 2. ขยายทางเดิน และหาตำแหน่งโปรเจคเตอร์
+            let padT = 1.3, padB = 1.3, padL = 1.3, padR = 1.3;
+            if (doorPos === 'top') padT = 2.2;
+            if (doorPos === 'bottom') padB = 2.2;
+            if (doorPos === 'left') padL = 2.2;
+            if (doorPos === 'right') padR = 2.2;
+
+            let projPos = 'top';
+            if (hasProjector) {
+                if (doorPos === 'top') { projPos = 'bottom'; padB = Math.max(padB, 1.5); }
+                else if (doorPos === 'left') { projPos = 'right'; padR = Math.max(padR, 1.5); }
+                else if (doorPos === 'right') { projPos = 'left'; padL = Math.max(padL, 1.5); }
+                else { projPos = 'top'; padT = Math.max(padT, 1.5); }
+            }
+
+            let autoRoomW = padL + workZoneW + padR;
+            let autoRoomL = padT + workZoneL + padB;
+
+            // 3. กำหนดขนาดห้อง
+            const isManual = document.getElementById('manualSizeToggle').checked;
+            let roomW = autoRoomW, roomL = autoRoomL;
+            
+            if (isManual) {
+                roomW = parseFloat(document.getElementById('customW').value) || autoRoomW;
+                roomL = parseFloat(document.getElementById('customL').value) || autoRoomL;
+                
+                padL = (roomW - workZoneW) / 2;
+                padR = padL;
+                padT = (roomL - workZoneL) / 2;
+                padB = padT;
+            } else {
+                document.getElementById('customW').value = autoRoomW.toFixed(1);
+                document.getElementById('customL').value = autoRoomL.toFixed(1);
+            }
+
+            const roomArea = roomW * roomL;
+            document.getElementById('roomSizeRes').innerText = `${roomArea.toFixed(1)}`;
+
+            // 4. คำนวณแอร์ (BTU)
+            const deviceHeat = (nb * 150) + (pc * 500) + (printer * 350);
+            let totalBTU = (roomArea * sunFactor) + (staff * 500) + deviceHeat;
+            if (ceilingH > 3) totalBTU *= (1 + (ceilingH - 3) * 0.1); 
+            document.getElementById('btuRes').innerText = `${(Math.ceil(totalBTU / 1000) * 1000).toLocaleString()}`;
+
+            // 5. คำนวณแสงสว่าง
+            const requiredLumens = 500 * roomArea / (0.65 * 0.85); 
+            const ledPanelLumens = 3600; 
+            const lampCount = Math.max(1, Math.ceil(requiredLumens / ledPanelLumens));
+            document.getElementById('lightRes').innerText = `${lampCount}`;
+
+            const actualDeskLux = (lampCount * ledPanelLumens * 0.65 * 0.85) / roomArea;
+            document.getElementById('luxRes').innerText = `${Math.round(actualDeskLux)}`;
+            
+            const distDesk = Math.max(0.1, ceilingH - 0.75);
+            const distFloor = ceilingH;
+            const actualFloorLux = actualDeskLux * Math.pow(distDesk / distFloor, 2);
+
+            // 6. ค่าไฟ
+            const acKW = (totalBTU / 11500) * 0.9; 
+            const lightKW = (lampCount * 36) / 1000;
+            const deviceKW = ((nb * 60) + (pc * 250) + (printer * 100)) / 1000;
+            const monthlyCost = (acKW + lightKW + deviceKW) * 8 * 22 * 4.8;
+            document.getElementById('energyRes').innerText = `${Math.round(monthlyCost).toLocaleString()}`;
+
+            // 7. วาดรูปส่งค่าไปครบทุกอย่าง
+            renderSVGs(roomW, roomL, padL, padT, workZoneW, workZoneL, staff, pc, printer, lampCount, doorPos, winPos, projPos, hasProjector, cols, rows, deskW, deskL, gapX, gapY, deskLayout, actualDeskLux, actualFloorLux, ceilingH);
+        }
+
+        function renderSVGs(w, l, padL, padT, wzW, wzL, staff, pc, printer, lamps, doorPos, winPos, projPos, hasProjector, cols, rows, deskW, deskL, gapX, gapY, deskLayout, luxDesk, luxFloor, ceilingH) {
+            const scale = 50; 
+            const svgW = w * scale;
+            const svgL = l * scale;
+            const offset = 60; 
+
+            // ================== คืนชีพฟังก์ชันวาดองค์ประกอบ ==================
+            const clash = (doorPos === winPos && winPos !== 'none');
+
+            // 1. ประตู
+            const getDoor = () => {
+                const size = 1.0 * scale; 
+                let cx = svgW/2, cy = svgL/2;
+                if (clash) { 
+                    if(doorPos==='top' || doorPos==='bottom') cx -= svgW*0.15;
+                    else cy += svgL*0.15;
+                }
+                if (doorPos === 'bottom') return `<g transform="translate(${cx - size/2}, ${svgL})"><rect x="0" y="-3" width="${size}" height="6" fill="#ef4444"/><path d="M 0 0 A ${size} ${size} 0 0 1 ${size} ${-size}" fill="none" stroke="#ef4444" stroke-dasharray="4,4"/><text x="${size/2}" y="15" font-size="10" fill="#ef4444" text-anchor="middle">ประตู</text></g>`;
+                if (doorPos === 'top') return `<g transform="translate(${cx - size/2}, 0)"><rect x="0" y="-3" width="${size}" height="6" fill="#ef4444"/><path d="M 0 0 A ${size} ${size} 0 0 0 ${size} ${size}" fill="none" stroke="#ef4444" stroke-dasharray="4,4"/><text x="${size/2}" y="-10" font-size="10" fill="#ef4444" text-anchor="middle">ประตู</text></g>`;
+                if (doorPos === 'left') return `<g transform="translate(0, ${cy - size/2})"><rect x="-3" y="0" width="6" height="${size}" fill="#ef4444"/><path d="M 0 0 A ${size} ${size} 0 0 1 ${size} ${size}" fill="none" stroke="#ef4444" stroke-dasharray="4,4"/><text x="-15" y="${size/2}" font-size="10" fill="#ef4444" transform="rotate(-90, -15, ${size/2})" text-anchor="middle">ประตู</text></g>`;
+                if (doorPos === 'right') return `<g transform="translate(${svgW}, ${cy - size/2})"><rect x="-3" y="0" width="6" height="${size}" fill="#ef4444"/><path d="M 0 0 A ${size} ${size} 0 0 0 ${-size} ${size}" fill="none" stroke="#ef4444" stroke-dasharray="4,4"/><text x="15" y="${size/2}" font-size="10" fill="#ef4444" transform="rotate(90, 15, ${size/2})" text-anchor="middle">ประตู</text></g>`;
+                return '';
+            };
+
+            // 2. หน้าต่าง
+            const getWindow = () => {
+                if (winPos === 'none') return '';
+                const size = Math.min(svgW, svgL) * 0.4; 
+                let cx = svgW/2, cy = svgL/2;
+                if (clash) {
+                    if(winPos==='top' || winPos==='bottom') cx += svgW*0.15;
+                    else cy -= svgL*0.15;
+                }
+                if (winPos === 'top') return `<g transform="translate(${cx - size/2}, -4)"><rect width="${size}" height="8" fill="#3b82f6" /><text x="${size/2}" y="-8" font-size="10" fill="#3b82f6" text-anchor="middle">หน้าต่าง</text></g>`;
+                if (winPos === 'bottom') return `<g transform="translate(${cx - size/2}, ${svgL-4})"><rect width="${size}" height="8" fill="#3b82f6" /><text x="${size/2}" y="18" font-size="10" fill="#3b82f6" text-anchor="middle">หน้าต่าง</text></g>`;
+                if (winPos === 'left') return `<g transform="translate(-4, ${cy - size/2})"><rect width="8" height="${size}" fill="#3b82f6" /></g>`;
+                if (winPos === 'right') return `<g transform="translate(${svgW-4}, ${cy - size/2})"><rect width="8" height="${size}" fill="#3b82f6" /></g>`;
+                return '';
+            };
+
+            // 3. จอโปรเจคเตอร์
+            const getProj = () => {
+                if (!hasProjector) return '';
+                const size = svgW * 0.25;
+                if (projPos === 'top') return `<rect x="${svgW/2 - size/2}" y="4" width="${size}" height="6" fill="#0f172a" rx="2"/><text x="${svgW/2}" y="22" font-size="10" font-weight="bold" fill="#334155" text-anchor="middle">จอภาพ</text>`;
+                if (projPos === 'bottom') return `<rect x="${svgW/2 - size/2}" y="${svgL-10}" width="${size}" height="6" fill="#0f172a" rx="2"/><text x="${svgW/2}" y="${svgL-15}" font-size="10" font-weight="bold" fill="#334155" text-anchor="middle">จอภาพ</text>`;
+                if (projPos === 'left') return `<rect x="4" y="${svgL/2 - size/2}" width="6" height="${size}" fill="#0f172a" rx="2"/>`;
+                if (projPos === 'right') return `<rect x="${svgW-10}" y="${svgL/2 - size/2}" width="6" height="${size}" fill="#0f172a" rx="2"/>`;
+                return '';
+            }
+
+            // 4. แอร์แขวนผนัง
+            const getAC = () => {
+                const acW = 1.3 * scale;
+                const acH = 0.35 * scale;
+                let acX = 0, acY = 0, wd = acW, hd = acH;
+                let textRotate = "";
+                let acPos = doorPos === 'bottom' ? 'top' : doorPos === 'top' ? 'bottom' : doorPos === 'left' ? 'right' : 'left';
+                let shift = (projPos === acPos && hasProjector) ? (svgW * 0.25) / 2 + 10 : 0;
+
+                if (acPos === 'top') {
+                    acX = svgW/2 - acW/2 + shift; acY = 2; wd = acW; hd = acH;
+                } else if (acPos === 'bottom') {
+                    acX = svgW/2 - acW/2 + shift; acY = svgL - acH - 2; wd = acW; hd = acH;
+                } else if (acPos === 'left') {
+                    acX = 2; acY = svgL/2 - acW/2 + shift; wd = acH; hd = acW;
+                    textRotate = `rotate(-90, ${acX + wd/2}, ${acY + hd/2})`;
+                } else if (acPos === 'right') {
+                    acX = svgW - acH - 2; acY = svgL/2 - acW/2 + shift; wd = acH; hd = acW;
+                    textRotate = `rotate(90, ${acX + wd/2}, ${acY + hd/2})`;
+                }
+
+                return `<g>
+                    <rect x="${acX}" y="${acY}" width="${wd}" height="${hd}" fill="#ffffff" stroke="#94a3b8" stroke-width="2" rx="3"/>
+                    <line x1="${acPos==='left'||acPos==='right' ? acX+wd/2 : acX+5}" y1="${acPos==='left'||acPos==='right' ? acY+5 : acY+hd/2+3}" 
+                          x2="${acPos==='left'||acPos==='right' ? acX+wd/2 : acX+wd-5}" y2="${acPos==='left'||acPos==='right' ? acY+hd-5 : acY+hd/2+3}" stroke="#cbd5e1" stroke-width="2"/>
+                    <text x="${acX + wd/2}" y="${acY + hd/2 + 3}" font-size="9" font-weight="bold" fill="#475569" text-anchor="middle" transform="${textRotate}">❄️ AIR CON</text>
+                </g>`;
+            }
+
+
+            // ==========================================
+            // แท็บที่ 1: แปลนห้อง (Plan View)
+            // ==========================================
+            let planSvg = `<svg width="${svgW + offset * 2}" height="${svgL + offset * 2}" viewBox="-${offset} -${offset} ${svgW + offset * 2} ${svgL + offset * 2}" xmlns="http://www.w3.org/2000/svg" style="background:#ffffff;">
+                <rect x="0" y="0" width="${svgW}" height="${svgL}" fill="#fffdf6" />
+                <rect x="${Math.max(0, padL * scale)}" y="${Math.max(0, padT * scale)}" width="${wzW * scale}" height="${wzL * scale}" fill="#f1f5f9" rx="8" />
+                <rect x="0" y="0" width="${svgW}" height="${svgL}" fill="none" stroke="#1e293b" stroke-width="4"/>
+                
+                ${getWindow()}
+                ${getDoor()}
+                ${getProj()}
+                ${getAC()}
+            `;
+
+            // วาดโต๊ะ
+            let placed = 0;
+            for(let r=0; r<rows; r++) {
+                for(let c=0; c<cols; c++) {
+                    if(placed >= staff) break;
+                    let dx = (padL + (c * (deskW + gapX))) * scale;
+                    let dy = 0;
+                    let isFacingUp = true; 
+                    let dW = deskW * scale;
+                    let dL = deskL * scale;
+
+                    if (deskLayout === 'face') {
+                        let pod = Math.floor(r / 2);
+                        dy = (padT + (pod * (2 * deskL + gapY)) + ((r % 2) * deskL)) * scale;
+                        isFacingUp = (r % 2 !== 0); 
+                    } else {
+                        dy = (padT + (r * (deskL + gapY))) * scale;
+                    }
+
+                    planSvg += `<rect x="${dx}" y="${dy}" width="${dW}" height="${dL}" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" rx="4"/>`;
+                    
+                    if (isFacingUp) {
+                        planSvg += `<circle cx="${dx + dW/2}" cy="${dy + dL + 15}" r="12" fill="#334155" />`;
+                        planSvg += `<rect x="${dx + dW/2 - 12}" y="${dy + 8}" width="24" height="16" fill="${placed < pc ? '#020617' : '#475569'}" rx="2"/>`;
+                    } else {
+                        planSvg += `<circle cx="${dx + dW/2}" cy="${dy - 15}" r="12" fill="#334155" />`;
+                        planSvg += `<rect x="${dx + dW/2 - 12}" y="${dy + dL - 24}" width="24" height="16" fill="${placed < pc ? '#020617' : '#475569'}" rx="2"/>`;
+                    }
+                    placed++;
+                }
+            }
+
+            // คืนชีพปริ้นเตอร์ 
+            let corners = [ {x:0.5, y:0.5}, {x:w-1.2, y:0.5}, {x:0.5, y:l-1.2}, {x:w-1.2, y:l-1.2} ];
+            if (doorPos === 'top') corners = corners.filter(c => c.y > 1);
+            if (doorPos === 'bottom') corners = corners.filter(c => c.y < l-2);
+            if (doorPos === 'left') corners = corners.filter(c => c.x > 1);
+            if (doorPos === 'right') corners = corners.filter(c => c.x < w-2);
+            if (corners.length === 0) corners = [{x:w-1.2, y:l-1.2}]; 
+
+            for(let i=0; i<printer; i++) {
+                let loc = corners[i % corners.length];
+                let px = loc.x * scale;
+                let py = (loc.y * scale) + (Math.floor(i / corners.length) * 35); 
+                
+                planSvg += `<g transform="translate(${px}, ${py})">
+                    <rect width="40" height="35" fill="#e2e8f0" stroke="#475569" stroke-width="2" rx="4"/>
+                    <rect x="5" y="5" width="30" height="5" fill="#475569" />
+                    <text x="20" y="22" font-size="8" text-anchor="middle" font-weight="bold" fill="#1e293b">PRINTER</text>
+                </g>`;
+            }
+
+            // เส้นบอกขนาด
+            planSvg += `<line x1="0" y1="-20" x2="${svgW}" y2="-20" stroke="#94a3b8" stroke-width="1.5"/><text x="${svgW/2}" y="-25" font-size="11" text-anchor="middle" fill="#94a3b8" font-weight="bold">กว้าง ${w.toFixed(2)} ม.</text>`;
+            planSvg += `<line x1="-20" y1="0" x2="-20" y2="${svgL}" stroke="#94a3b8" stroke-width="1.5"/><text x="-25" y="${svgL/2}" font-size="11" text-anchor="middle" fill="#94a3b8" font-weight="bold" transform="rotate(-90, -25, ${svgL/2})">ยาว ${l.toFixed(2)} ม.</text></svg>`;
+            document.getElementById('view-plan').innerHTML = planSvg;
+
+            // ==========================================
+            // แท็บที่ 2: ระบบไฟส่องสว่าง & ค่า Lux
+            // ==========================================
+            let lightSvg = `<svg width="${svgW + offset * 2}" height="${svgL + offset * 2}" viewBox="-${offset} -${offset} ${svgW + offset * 2} ${svgL + offset * 2}" xmlns="http://www.w3.org/2000/svg" style="background:#0f172a; border-radius:4px;">
+                <rect x="0" y="0" width="${svgW}" height="${svgL}" fill="none" stroke="#334155" stroke-width="4"/>
+            `;
+            const lCols = Math.ceil(Math.sqrt(lamps));
+            const lRows = Math.ceil(lamps / lCols);
+            
+            for(let r=0; r<lRows; r++) {
+                for(let c=0; c<lCols; c++) {
+                    const lx = (svgW / (lCols + 1)) * (c + 1);
+                    const ly = (svgL / (lRows + 1)) * (r + 1);
+                    
+                    lightSvg += `<circle cx="${lx}" cy="${ly}" r="${1.8 * scale}" fill="url(#grad300)" opacity="0.2"/>`;
+                    lightSvg += `<circle cx="${lx}" cy="${ly}" r="${1.2 * scale}" fill="url(#grad500)" opacity="0.45"/>`;
+                    lightSvg += `<rect x="${lx - 12}" y="${ly - 12}" width="24" height="24" fill="#ffffff" stroke="#eab308" rx="1" style="box-shadow:0 0 10px #fff;"/>`;
+                    
+                    let peakLux = Math.round(luxDesk * 1.2); 
+                    lightSvg += `<text x="${lx}" y="${ly + 25}" font-size="10" fill="#fef08a" text-anchor="middle" font-weight="bold" filter="url(#bgText)">${peakLux} Lux</text>`;
+
+                    if (c < lCols - 1) {
+                        const nextLx = (svgW / (lCols + 1)) * (c + 2);
+                        lightSvg += `<text x="${lx + (nextLx-lx)/2}" y="${ly + 4}" font-size="10" fill="#fde047" text-anchor="middle" opacity="0.8">${Math.round(luxDesk)} Lux</text>`;
+                    }
+                }
+            }
+
+            lightSvg += `<text x="${svgW * 0.15}" y="${svgL * 0.1}" font-size="9" fill="#94a3b8" text-anchor="middle">~${Math.round(luxFloor)} Lux</text>`;
+            lightSvg += `<text x="${svgW * 0.85}" y="${svgL * 0.9}" font-size="9" fill="#94a3b8" text-anchor="middle">~${Math.round(luxFloor)} Lux</text>`;
+
+            lightSvg += `<defs>
+                <radialGradient id="grad500" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fef08a" /><stop offset="100%" stop-color="#eab308" stop-opacity="0" /></radialGradient>
+                <radialGradient id="grad300" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fde047" /><stop offset="100%" stop-color="#0f172a" stop-opacity="0" /></radialGradient>
+                <filter id="bgText" x="-10%" y="-10%" width="120%" height="120%">
+                    <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.8"/>
+                </filter>
+            </defs></svg>`;
+            document.getElementById('view-lighting').innerHTML = lightSvg;
+
+            // ==========================================
+            // แท็บที่ 3: ภาพตัดขวาง (Elevation View)
+            // ==========================================
+            const evScale = 70; 
+            const evW = 4 * evScale; 
+            const evH = ceilingH * evScale;
+            
+            let evSvg = `<svg width="${evW + 120}" height="${evH + 100}" viewBox="-60 -20 ${evW + 120} ${evH + 100}" xmlns="http://www.w3.org/2000/svg" style="background:#ffffff; border-radius:4px;">`;
+            
+            evSvg += `<rect x="-20" y="0" width="${evW + 40}" height="8" fill="#cbd5e1" />`; 
+            evSvg += `<rect x="-20" y="${evH}" width="${evW + 40}" height="12" fill="#94a3b8" />`; 
+            
+            evSvg += `<polygon points="${evW/2 - 15},8 ${evW/2 + 15},8 ${evW},${evH} 0,${evH}" fill="#fef08a" opacity="0.15" />`;
+            evSvg += `<polygon points="${evW/2 - 10},8 ${evW/2 + 10},8 ${evW*0.8},${evH} ${evW*0.2},${evH}" fill="#fde047" opacity="0.25" />`;
+            
+            evSvg += `<rect x="${evW/2 - 20}" y="8" width="40" height="4" fill="#fbbf24" />`;
+            
+            const deskY = evH - (0.75 * evScale);
+            evSvg += `<rect x="${evW/2 - 40}" y="${deskY}" width="80" height="6" fill="#e2e8f0" stroke="#94a3b8" />`; 
+            evSvg += `<rect x="${evW/2 - 35}" y="${deskY+6}" width="6" height="${0.75*evScale}" fill="#94a3b8" />`; 
+            evSvg += `<rect x="${evW/2 + 29}" y="${deskY+6}" width="6" height="${0.75*evScale}" fill="#94a3b8" />`; 
+            
+            evSvg += `<rect x="${evW/2 + 50}" y="${evH - 0.45*evScale}" width="30" height="6" fill="#475569" />`; 
+            evSvg += `<rect x="${evW/2 + 75}" y="${evH - 0.9*evScale}" width="5" height="${0.45*evScale}" fill="#475569" />`; 
+            evSvg += `<rect x="${evW/2 + 62}" y="${evH - 0.45*evScale}" width="4" height="${0.45*evScale}" fill="#1e293b" />`; 
+            
+            evSvg += `<rect x="${evW/2 - 10}" y="${deskY - 20}" width="4" height="20" fill="#64748b" />`;
+            evSvg += `<rect x="${evW/2 - 15}" y="${deskY - 35}" width="14" height="20" fill="#0f172a" />`;
+            
+            evSvg += `<line x1="-30" y1="8" x2="-30" y2="${evH}" stroke="#334155" stroke-width="1.5" />`;
+            evSvg += `<line x1="-35" y1="8" x2="-25" y2="8" stroke="#334155" stroke-width="1.5" />`;
+            evSvg += `<line x1="-35" y1="${evH}" x2="-25" y2="${evH}" stroke="#334155" stroke-width="1.5" />`;
+            evSvg += `<text x="-40" y="${evH/2}" font-size="11" fill="#334155" text-anchor="middle" font-weight="bold" transform="rotate(-90, -40, ${evH/2})">ฝ้าสูง ${ceilingH.toFixed(2)} ม.</text>`;
+
+            evSvg += `<line x1="${evW + 20}" y1="${deskY}" x2="${evW + 20}" y2="${evH}" stroke="#334155" stroke-width="1.5" stroke-dasharray="2,2"/>`;
+            evSvg += `<text x="${evW + 25}" y="${deskY + (0.75*evScale)/2 + 4}" font-size="10" fill="#334155">ระดับโต๊ะ (0.75 ม.)</text>`;
+            evSvg += `<line x1="${evW/2 + 40}" y1="${deskY}" x2="${evW + 20}" y2="${deskY}" stroke="#cbd5e1" stroke-width="1"/>`;
+
+            evSvg += `<rect x="${evW/2 - 70}" y="${deskY - 22}" width="55" height="16" fill="#fef08a" rx="2" />`;
+            evSvg += `<text x="${evW/2 - 42}" y="${deskY - 11}" font-size="10" fill="#854d0e" font-weight="bold" text-anchor="middle">${Math.round(luxDesk)} Lux</text>`;
+
+            evSvg += `<rect x="${evW/2 - 90}" y="${evH - 25}" width="55" height="16" fill="#fde047" rx="2" />`;
+            evSvg += `<text x="${evW/2 - 62}" y="${evH - 14}" font-size="10" fill="#854d0e" font-weight="bold" text-anchor="middle">${Math.round(luxFloor)} Lux</text>`;
+
+            evSvg += `</svg><p class="mt-4 text-xs text-slate-500 max-w-sm text-center">ภาพตัดขวางแสดงการกระจายแสงตกกระทบ (Light Falloff) จากโคมไฟเพดาน สู่ระดับโต๊ะทำงาน และพื้นห้อง ตามหลัก Inverse Square Law</p>`;
+            document.getElementById('view-elevation').innerHTML = evSvg;
+        }
+
+        function downloadOutput() {
+            html2canvas(document.getElementById('exportContainer'), { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `office-plan.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        window.onload = updateAll;
+    </script>
+</body>
+</html>
