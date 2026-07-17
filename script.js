@@ -1,13 +1,16 @@
-// 1. ตั้งค่าการเชื่อมต่อ (นำค่าจากหน้า Dashboard ของ Supabase มาใส่)
+// 1. ตั้งค่าการเชื่อมต่อ
 const SUPABASE_URL = 'https://tfushiexgasfrftdwzdt.supabase.co';
-const SUPABASE_KEY = 'ใส่คีย์ยาวๆ ที่ขึ้นต้นด้วย eyJhb... ของคุณตรงนี้'; 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// อย่าลืมเอา API Key ของคุณมาใส่ตรงนี้นะครับ
+const SUPABASE_KEY = 'ใส่คีย์_anon_public_ของคุณที่นี่'; 
+
+// ✅ เปลี่ยนชื่อตัวแปรใหม่เป็น supabaseClient เพื่อไม่ให้ชื่อชนกัน
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 2. ฟังก์ชัน READ (ดึงข้อมูลมาโชว์)
 async function fetchData() {
-    const { data, error } = await supabase.from('fuel_types').select('*');
+    // ✅ ใช้ supabaseClient ดึงข้อมูล
+    const { data, error } = await supabaseClient.from('fuel_types').select('*');
     
-    // ถ้ามี Error ให้แจ้งเตือนบนหน้าจอ จะได้รู้สาเหตุ
     if (error) {
         console.error(error);
         alert('ดึงข้อมูลไม่ได้: ' + error.message);
@@ -18,7 +21,7 @@ async function fetchData() {
     tbody.innerHTML = '';
     
     data.forEach(item => {
-        // ✅ แก้ไข item.id เป็น item.fuel_id ให้ตรงกับ Supabase ของคุณ
+        // ใช้ item.fuel_id ให้ตรงกับในตาราง Supabase
         tbody.innerHTML += `<tr>
             <td>${item.name}</td>
             <td>${item.description || '-'}</td>
@@ -32,22 +35,21 @@ async function addData() {
     const name = document.getElementById('fuelName').value;
     const desc = document.getElementById('fuelDesc').value;
     
-    // ป้องกันการกดบันทึกช่องว่าง
     if (!name) {
         alert("กรุณากรอกชื่อเชื้อเพลิง");
         return;
     }
 
-    const { error } = await supabase.from('fuel_types').insert([{ name: name, description: desc }]);
+    // ✅ ใช้ supabaseClient บันทึกข้อมูล
+    const { error } = await supabaseClient.from('fuel_types').insert([{ name: name, description: desc }]);
     
     if (error) {
         alert('บันทึกไม่ได้: ' + error.message);
     } else {
         alert('บันทึกสำเร็จ!');
-        // ล้างค่าในช่องกรอก
         document.getElementById('fuelName').value = '';
         document.getElementById('fuelDesc').value = '';
-        fetchData(); // ดึงข้อมูลใหม่มาโชว์
+        fetchData(); 
     }
 }
 
@@ -55,8 +57,8 @@ async function addData() {
 async function deleteData(id) {
     if(!confirm("ยืนยันการลบ?")) return;
     
-    // ✅ แก้ไข .eq('id', id) เป็น .eq('fuel_id', id)
-    const { error } = await supabase.from('fuel_types').delete().eq('fuel_id', id);
+    // ✅ ใช้ supabaseClient ลบข้อมูล
+    const { error } = await supabaseClient.from('fuel_types').delete().eq('fuel_id', id);
     
     if (error) {
         alert('ลบไม่ได้: ' + error.message);
