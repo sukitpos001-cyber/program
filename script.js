@@ -1,6 +1,6 @@
 // 1. ตั้งค่าการเชื่อมต่อ (นำค่าจากหน้า Dashboard ของ Supabase มาใส่)
 const SUPABASE_URL = 'https://tfushiexgasfrftdwzdt.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_PhOMjxCCX0nd3O484QeGpA_yiZp11i4'; // ใส่ตัวที่เขียนว่า anon public
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdXNoaWV4Z2FzZnJmdGR3emR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNjAxMDEsImV4cCI6MjA5OTczNjEwMX0.ZKkZuZAhK7MX1nl1kD_coq8HzfyVtRlBDFTvXUrOkkY'; // ใส่ตัวที่เขียนว่า anon public
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 2. ฟังก์ชัน READ (ดึงข้อมูลมาโชว์)
