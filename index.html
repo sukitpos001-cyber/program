@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ทดสอบ CRUD Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h2>บันทึกข้อมูลเชื้อเพลิง (Fuel Types)</h2>
+    
+    <input type="text" id="fuelName" placeholder="ชื่อเชื้อเพลิง">
+    <input type="text" id="fuelDesc" placeholder="รายละเอียด">
+    <button onclick="addData()">บันทึกข้อมูล</button>
+
+    <table>
+        <thead>
+            <tr><th>ชื่อ</th><th>รายละเอียด</th><th>จัดการ</th></tr>
+        </thead>
+        <tbody id="fuelTable"></tbody>
+    </table>
+
+    <script src="script.js"></script>
+</body>
+</html>
