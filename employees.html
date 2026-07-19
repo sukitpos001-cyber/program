@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการข้อมูลพนักงาน - บริษัท สยามโกลด์เอ็นเนอจี่ จำกัด</title>
+    <!-- เรียกใช้ Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- เรียกใช้ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 p-8 font-sans">
+
+    <div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">จัดการข้อมูลพนักงาน (Employees)</h2>
+        
+        <!-- ฟอร์มกรอกข้อมูล -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">ชื่อ-นามสกุล *</label>
+                <input type="text" id="empName" placeholder="กรอกชื่อ-นามสกุล" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">แผนก</label>
+                <input type="text" id="empDept" placeholder="กรอกแผนก" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">เบอร์โทรศัพท์</label>
+                <input type="number" id="empTel" placeholder="ตัวเลขเท่านั้น" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">อีเมล</label>
+                <input type="email" id="empEmail" placeholder="example@email.com" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+
+        <div class="mb-8 flex gap-2">
+            <button id="saveBtn" onclick="saveData()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded hover:bg-blue-700 transition duration-200">
+                บันทึกข้อมูล
+            </button>
+            <button id="cancelBtn" onclick="cancelEdit()" class="bg-gray-400 text-white font-bold py-2 px-6 rounded hover:bg-gray-500 transition duration-200 hidden">
+                ยกเลิก
+            </button>
+        </div>
+
+        <!-- ตารางแสดงผล -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-800 text-white">
+                        <th class="p-3 border">ชื่อ-นามสกุล</th>
+                        <th class="p-3 border">แผนก</th>
+                        <th class="p-3 border">เบอร์โทรศัพท์</th>
+                        <th class="p-3 border">อีเมล</th>
+                        <th class="p-3 border text-center w-40">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeTable">
+                    <!-- ข้อมูลจะถูกดึงมาแสดงที่นี่ -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ลำดับการเรียกใช้ Script สำคัญมาก -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="employees.js"></script>
+</body>
+</html>
