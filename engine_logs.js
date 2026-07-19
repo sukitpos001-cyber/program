@@ -1,5 +1,5 @@
 let editLogId = null;
-let currentLogData = []; // สร้างตัวแปรเก็บข้อมูลไว้ชั่วคราวเพื่อให้เรียกแก้ไขได้ง่าย
+let currentLogData = []; 
 
 // 1. โหลดรายชื่อพนักงาน
 async function loadEmployees() {
@@ -10,11 +10,12 @@ async function loadEmployees() {
 
     const select = document.getElementById('empSelect');
     if (error) {
-        select.innerHTML = '<option value="">โหลดข้อมูลไม่สำเร็จ</option>';
+        select.innerHTML = '<option disabled>โหลดข้อมูลไม่สำเร็จ</option>';
         return;
     }
 
-    select.innerHTML = '<option value="">-- เลือกพนักงาน --</option>';
+    // เอา <option> เลือกพนักงานออก เพื่อให้กล่อง Multiple ดูสะอาดตา
+    select.innerHTML = ''; 
     data.forEach(emp => {
         select.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
     });
@@ -32,14 +33,15 @@ async function fetchData() {
         return;
     }
     
-    currentLogData = data; // เก็บข้อมูลลงตัวแปร Global
+    currentLogData = data; 
     const tbody = document.getElementById('logTable');
     tbody.innerHTML = '';
     
     data.forEach(item => {
         const dateObj = item.datetime ? new Date(item.datetime).toLocaleString('th-TH') : '-';
-        // ดึงชื่อพนักงานคนแรกออกมาจาก Array
-        const empName = (item.employees && item.employees.length > 0) ? item.employees[0] : '-';
+        
+        // แปลง Array รายชื่อพนักงาน ให้กลายเป็นข้อความยาวๆ คั่นด้วยลูกน้ำ
+        const empName = (item.employees && item.employees.length > 0) ? item.employees.join(', ') : '-';
         
         tbody.innerHTML += `
         <tr class="hover:bg-gray-100 transition duration-150 border-b">
@@ -66,13 +68,11 @@ async function fetchData() {
 
 // 3. เตรียมข้อมูลลงฟอร์มเมื่อกด "แก้ไข"
 function prepareEdit(id) {
-    // ค้นหาข้อมูลจาก Array ที่เราเก็บไว้
     const item = currentLogData.find(log => log.engine_id === id);
     if (!item) return;
 
     editLogId = id;
     
-    // แปลงเวลาให้กลับไปแสดงในช่อง datetime-local ได้
     if (item.datetime) {
         let date = new Date(item.datetime);
         date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
@@ -83,18 +83,28 @@ function prepareEdit(id) {
     document.getElementById('e1H').value = item.e1_h !== null ? item.e1_h : '';
     document.getElementById('e2Kwh').value = item.e2_kwh !== null ? item.e2_kwh : '';
     document.getElementById('e2H').value = item.e2_h !== null ? item.e2_h : '';
-    
-    const empName = (item.employees && item.employees.length > 0) ? item.employees[0] : '';
-    document.getElementById('empSelect').value = empName;
     document.getElementById('logNote').value = item.note !== null ? item.note : '';
 
-    // เปลี่ยนสีและข้อความปุ่ม
+    // ล้างการเลือกเก่าออกก่อน
+    const empSelect = document.getElementById('empSelect');
+    for (let i = 0; i < empSelect.options.length; i++) {
+        empSelect.options[i].selected = false;
+    }
+    
+    // ไฮไลต์รายชื่อพนักงานทุกคนที่ถูกบันทึกไว้
+    if (item.employees && item.employees.length > 0) {
+        for (let i = 0; i < empSelect.options.length; i++) {
+            if (item.employees.includes(empSelect.options[i].value)) {
+                empSelect.options[i].selected = true;
+            }
+        }
+    }
+
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.innerText = 'อัปเดตข้อมูล';
     saveBtn.classList.replace('bg-blue-600', 'bg-green-600');
     saveBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
     
-    // โชว์ปุ่มยกเลิก (เหมือนของหน้า employees ที่ทำไว้)
     const cancelBtn = document.getElementById('cancelBtn');
     if (cancelBtn) cancelBtn.classList.remove('hidden');
 }
@@ -107,8 +117,13 @@ function cancelEdit() {
     document.getElementById('e1H').value = '';
     document.getElementById('e2Kwh').value = '';
     document.getElementById('e2H').value = '';
-    document.getElementById('empSelect').value = '';
     document.getElementById('logNote').value = '';
+    
+    // ล้างการเลือกรายชื่อพนักงาน
+    const empSelect = document.getElementById('empSelect');
+    for (let i = 0; i < empSelect.options.length; i++) {
+        empSelect.options[i].selected = false;
+    }
     
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.innerText = 'บันทึกข้อมูล';
@@ -126,11 +141,14 @@ async function saveData() {
     const e1_h = document.getElementById('e1H').value;
     const e2_kwh = document.getElementById('e2Kwh').value;
     const e2_h = document.getElementById('e2H').value;
-    const employee = document.getElementById('empSelect').value;
     const note = document.getElementById('logNote').value;
     
-    if (!datetime || !employee) {
-        Swal.fire('แจ้งเตือน', 'กรุณากรอก วัน-เวลา และเลือกพนักงาน', 'warning');
+    // ดึงค่ารายชื่อที่ถูกเลือกทั้งหมดออกมาเป็น Array
+    const empSelect = document.getElementById('empSelect');
+    const selectedEmployees = Array.from(empSelect.selectedOptions).map(option => option.value);
+    
+    if (!datetime || selectedEmployees.length === 0) {
+        Swal.fire('แจ้งเตือน', 'กรุณากรอก วัน-เวลา และเลือกพนักงานอย่างน้อย 1 คน', 'warning');
         return;
     }
 
@@ -140,12 +158,11 @@ async function saveData() {
         e1_h: e1_h ? e1_h : null,
         e2_kwh: e2_kwh ? e2_kwh : null,
         e2_h: e2_h ? e2_h : null,
-        employees: [employee], 
+        employees: selectedEmployees, // ส่งตัวแปรที่เป็น Array เข้าไปตรงๆ ได้เลย
         note: note
     };
 
     if (editLogId) {
-        // กรณีอัปเดตข้อมูลเดิม
         const { error } = await supabaseClient
             .from('engine_logs')
             .update(payload)
@@ -159,7 +176,6 @@ async function saveData() {
             fetchData();
         }
     } else {
-        // กรณีบันทึกข้อมูลใหม่
         const { error } = await supabaseClient
             .from('engine_logs')
             .insert([payload]);
