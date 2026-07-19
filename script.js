@@ -1,8 +1,6 @@
 // 1. ตั้งค่าการเชื่อมต่อ
 const SUPABASE_URL = 'https://tfushiexgasfrftdwzdt.supabase.co';
-// อย่าลืมเอา API Key ของคุณมาใส่ตรงนี้นะครับ
 const SUPABASE_KEY = 'sb_publishable_PhOMjxCCX0nd3O484QeGpA_yiZp11i4';
-
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ✅ ตัวแปรใหม่: ใช้เก็บ ID ของเชื้อเพลิงที่เรากำลังคลิกแก้ไข
