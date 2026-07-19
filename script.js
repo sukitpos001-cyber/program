@@ -1,7 +1,7 @@
 // 1. ตั้งค่าการเชื่อมต่อ
 const SUPABASE_URL = 'https://tfushiexgasfrftdwzdt.supabase.co';
 // อย่าลืมเอา API Key ของคุณมาใส่ตรงนี้นะครับ
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdXNoaWV4Z2FzZnJmdGR3emR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNjAxMDEsImV4cCI6MjA5OTczNjEwMX0.ZKkZuZAhK7MX1nl1kD_coq8HzfyVtRlBDFTvXUrOkkY';
+const SUPABASE_KEY = 'sb_publishable_PhOMjxCCX0nd3O484QeGpA_yiZp11i4';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
