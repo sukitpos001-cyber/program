@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกการทำงานเครื่องยนต์ - บริษัท สยามโกลด์เอ็นเนอจี่ จำกัด</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 p-8 font-sans">
+
+    <!-- เมนูนำทาง (Navigation) ง่ายๆ -->
+    <div class="max-w-6xl mx-auto mb-4">
+        <a href="employees.html" class="text-blue-600 hover:underline mr-4">← กลับไปหน้าพนักงาน</a>
+    </div>
+
+    <div class="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">บันทึกการทำงานเครื่องยนต์ (Engine Logs)</h2>
+        
+        <!-- ฟอร์มกรอกข้อมูล -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">วัน-เวลาที่บันทึก (datetime) *</label>
+                <input type="datetime-local" id="logDatetime" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <!-- E1 -->
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">E1 (kWh)</label>
+                <input type="number" step="any" id="e1Kwh" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">E1 (h)</label>
+                <input type="number" step="any" id="e1H" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- E2 -->
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">E2 (kWh)</label>
+                <input type="number" step="any" id="e2Kwh" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">E2 (h)</label>
+                <input type="number" step="any" id="e2H" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- ดึงรายชื่อพนักงานมาแสดงใน Dropdown -->
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">พนักงานผู้บันทึก *</label>
+                <select id="empSelect" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500 bg-white">
+                    <option value="">-- กำลังโหลดรายชื่อ --</option>
+                </select>
+            </div>
+            
+            <!-- Note (ขยายเต็ม 3 คอลัมน์) -->
+            <div class="md:col-span-2 lg:col-span-3">
+                <label class="block text-gray-700 text-sm font-bold mb-2">หมายเหตุ (Note)</label>
+                <input type="text" id="logNote" placeholder="รายละเอียดเพิ่มเติม..." class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+
+        <div class="mb-8 flex gap-2">
+            <button id="saveBtn" onclick="saveData()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded hover:bg-blue-700 transition duration-200">
+                บันทึกข้อมูล
+            </button>
+            <button id="cancelBtn" onclick="cancelEdit()" class="bg-gray-400 text-white font-bold py-2 px-6 rounded hover:bg-gray-500 transition duration-200 hidden">
+                ยกเลิก
+            </button>
+        </div>
+
+        <!-- ตารางแสดงผล -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-gray-800 text-white">
+                        <th class="p-3 border">วัน-เวลา</th>
+                        <th class="p-3 border">E1 (kWh)</th>
+                        <th class="p-3 border">E1 (h)</th>
+                        <th class="p-3 border">E2 (kWh)</th>
+                        <th class="p-3 border">E2 (h)</th>
+                        <th class="p-3 border">ผู้บันทึก</th>
+                        <th class="p-3 border">หมายเหตุ</th>
+                        <th class="p-3 border text-center w-32">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="logTable">
+                    <!-- ข้อมูลจะถูกดึงมาแสดงที่นี่ -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Script สำหรับ Database -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="engine_logs.js"></script>
+</body>
+</html>
