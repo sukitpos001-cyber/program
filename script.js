@@ -1,7 +1,7 @@
 // 1. ตั้งค่าการเชื่อมต่อ
 const SUPABASE_URL = 'https://tfushiexgasfrftdwzdt.supabase.co';
 // อย่าลืมเอา API Key ของคุณมาใส่ตรงนี้นะครับ
-const SUPABASE_KEY = 'ใส่คีย์_anon_public_ของคุณที่นี่'; 
+const SUPABASE_KEY = 'sb_publishable_PhOMjxCCX0nd3O484QeGpA_yiZp11i4'; 
 
 // ✅ เปลี่ยนชื่อตัวแปรใหม่เป็น supabaseClient เพื่อไม่ให้ชื่อชนกัน
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
