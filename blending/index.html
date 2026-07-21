@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rice Blending SCADA Simulation with Visual Tanks</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts (Sarabun) -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        
+        /* สไตล์สำหรับ Slider */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4ade80;
+            cursor: pointer;
+        }
+
+        /* รูปทรงถังกรวย (Hopper) */
+        .tank-hopper {
+            clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
+        }
+
+        /* Animation ข้าวไหล */
+        @keyframes flowPulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0.6; }
+        }
+        .flowing {
+            animation: flowPulse 0.4s infinite;
+        }
+        
+        /* Transition นุ่มนวลสำหรับระดับข้าว */
+        .grain-level { transition: height 0.1s linear; }
+        .valve-door { transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Rice Blending Control System</h1>
+            <span class="text-sm bg-slate-700 px-3 py-1 rounded-full">Max Output: 30 t/h</span>
+        </div>
+
+        <div class="p-6">
+            <!-- Configuration Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Settings -->
+                <div class="col-span-1 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h2 class="text-lg font-semibold mb-4 text-slate-700">1. ตั้งค่าการผลิต</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">จำนวนถัง (1-8 ถัง)</label>
+                        <select id="numTanks" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="generateTankInputs()">
+                            <option value="1">1 ถัง</option>
+                            <option value="2">2 ถัง</option>
+                            <option value="3">3 ถัง</option>
+                            <option value="4">4 ถัง</option>
+                            <option value="5">5 ถัง</option>
+                            <option value="6">6 ถัง</option>
+                            <option value="7">7 ถัง</option>
+                            <option value="8" selected>8 ถัง</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">เป้าหมายการผลิตรวม (ตัน)</label>
+                        <input type="number" id="targetTotal" value="60" min="1" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- Recipe -->
+                <div class="col-span-1 md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-slate-700">2. กำหนดสูตรส่วนผสม (%)</h2>
+                        <span id="totalPercentLabel" class="text-sm font-bold text-blue-600">รวม: 0% / 100%</span>
+                    </div>
+                    
+                    <div id="tankInputsContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <!-- Inputs will be generated here -->
+                    </div>
+
+                    <div class="mt-6 flex gap-3 justify-end">
+                        <button onclick="resetForm()" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition font-medium">
+                            รีเซ็ต (Cancel)
+                        </button>
+                        <button onclick="calculateRecipe()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition font-medium">
+                            คำนวณและตรวจสอบเงื่อนไข
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculation Results -->
+            <div id="resultsSection" class="hidden mb-8">
+                <h2 class="text-lg font-semibold mb-4 text-slate-700">3. สรุปพารามิเตอร์การเดินเครื่อง</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100 text-center">
+                        <div class="text-sm text-blue-600">อัตราการผลิตรวม (Total Output)</div>
+                        <div class="text-xl font-bold text-blue-800" id="resTotalRate">0 t/h</div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100 text-center">
+                        <div class="text-sm text-blue-600">ระยะเวลาเดินเครื่องโดยประมาณ</div>
+                        <div class="text-xl font-bold text-blue-800" id="resTime">0 ชม. 0 นาที</div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="bg-slate-200 text-slate-700">
+                            <tr>
+                                <th class="p-2 border">ถังที่</th>
+                                <th class="p-2 border">สัดส่วนสูตร (%)</th>
+                                <th class="p-2 border">Flow Rate (t/h)</th>
+                                <th class="p-2 border text-blue-600">การเปิดปากถัง (%)</th>
+                                <th class="p-2 border">ปริมาณที่ต้องจ่าย (ตัน)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultTableBody">
+                            <!-- Table rows -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 flex justify-end">
+                    <button onclick="startSimulation()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition font-bold shadow-md flex items-center gap-2">
+                        ▶ เริ่ม Simulate
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simulation Dashboard -->
+            <div id="simulationSection" class="hidden bg-slate-900 rounded-xl p-6 shadow-inner text-white">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-6 border-b border-slate-700 pb-4 gap-4">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-2xl font-bold text-green-400" id="simStatusLabel">Simulation Running...</h2>
+                            <span id="modeBadge" class="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30">AUTO</span>
+                        </div>
+                        <div class="text-slate-400 text-sm mt-1" id="simTimeLabel">เวลาผ่านไป: 00:00:00</div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button id="btnPause" onclick="togglePause()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-medium text-sm transition flex items-center gap-1">
+                            ⏸ Pause
+                        </button>
+                        <button id="btnStop" onclick="stopSimulationText()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium text-sm transition flex items-center gap-1">
+                            ⏹ Stop
+                        </button>
+                    </div>
+
+                    <div class="text-right">
+                        <div class="text-sm text-slate-400">ปริมาณรวมที่ผสมแล้วทั้งหมด</div>
+                        <div class="text-3xl font-bold text-white"><span id="simTotalWeight">0.00</span> / <span id="simTargetWeight">0</span> t</div>
+                    </div>
+                </div>
+
+                <!-- Manual Time Slider Control -->
+                <div class="mb-6 bg-slate-800 p-4 rounded-lg border border-slate-700 flex items-center gap-4">
+                    <span class="text-sm font-medium text-slate-300 whitespace-nowrap">🎛 Time Control</span>
+                    <input type="range" id="simSlider" min="0" max="100" value="0" step="0.1" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-400" oninput="handleSliderInput()">
+                    <span id="sliderPercentLabel" class="text-sm font-mono text-slate-400 w-12 text-right">0%</span>
+                </div>
+
+                <!-- Visual Tanks Grid -->
+                <div id="simBarsContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <!-- Tanks will be injected here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const MAX_TOTAL_OUTPUT = 30; // t/h
+        const MAX_TANK_OUTPUT = 20; // t/h
+        const MIN_TANK_OUTPUT = 0.5; // t/h
+
+        let currentConfig = null; 
+        let simInterval = null;
+        
+        let isPaused = false;
+        let currentProgressRatio = 0; 
+        const simDurationSeconds = 12; // จำลองความเร็ว 12 วินาทีจบ
+        const intervalMs = 50; 
+        const totalTicks = (simDurationSeconds * 1000) / intervalMs;
+
+        const defaultRecipe = [16, 10, 30, 2, 5, 8, 25, 4];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            generateTankInputs();
+        });
+
+        function generateTankInputs() {
+            const numTanks = parseInt(document.getElementById('numTanks').value);
+            const container = document.getElementById('tankInputsContainer');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= numTanks; i++) {
+                const defaultVal = (i <= defaultRecipe.length) ? defaultRecipe[i-1] : 0;
+                container.innerHTML += `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ถัง ${i} (%)</label>
+                        <input type="number" id="tank_${i}" value="${defaultVal}" min="0" max="100" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 tank-input" oninput="updateTotalPercent()">
+                    </div>
+                `;
+            }
+            updateTotalPercent();
+            resetSimUI();
+        }
+
+        function updateTotalPercent() {
+            let total = 0;
+            document.querySelectorAll('.tank-input').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            const label = document.getElementById('totalPercentLabel');
+            label.innerText = `รวม: ${total.toFixed(2)}% / 100%`;
+            label.className = `text-sm font-bold ${total > 100 ? 'text-red-600' : (total === 100 ? 'text-green-600' : 'text-blue-600')}`;
+        }
+
+        function resetForm() {
+            document.getElementById('targetTotal').value = 60;
+            document.getElementById('numTanks').value = 8;
+            generateTankInputs();
+        }
+
+        function resetSimUI() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('simulationSection').classList.add('hidden');
+            clearInterval(simInterval);
+            isPaused = false;
+            currentProgressRatio = 0;
+        }
+
+        function calculateRecipe() {
+            const numTanks = parseInt(document.getElementById('numTanks').value);
+            const targetTotal = parseFloat(document.getElementById('targetTotal').value);
+            
+            if (!targetTotal || targetTotal <= 0) return Swal.fire('ข้อผิดพลาด', 'กรุณาระบุเป้าหมายการผลิตที่มากกว่า 0', 'error');
+
+            let totalPercent = 0;
+            let recipe = [];
+            for (let i = 1; i <= numTanks; i++) {
+                let val = parseFloat(document.getElementById(`tank_${i}`).value) || 0;
+                recipe.push({ id: i, percent: val });
+                totalPercent += val;
+            }
+
+            if (Math.abs(totalPercent - 100) > 0.01) return Swal.fire('ข้อผิดพลาด', `ผลรวมสัดส่วนต้องเท่ากับ 100% (ปัจจุบัน ${totalPercent}%)`, 'error');
+
+            let requiredMinTotalRate = 0, allowedMaxTotalRate = MAX_TOTAL_OUTPUT; 
+            recipe.forEach(t => {
+                if (t.percent > 0) {
+                    let minRate = MIN_TANK_OUTPUT / (t.percent / 100);
+                    if (minRate > requiredMinTotalRate) requiredMinTotalRate = minRate;
+                    
+                    let maxRate = MAX_TANK_OUTPUT / (t.percent / 100);
+                    if (maxRate < allowedMaxTotalRate) allowedMaxTotalRate = maxRate;
+                }
+            });
+
+            if (requiredMinTotalRate > allowedMaxTotalRate) {
+                return Swal.fire({
+                    icon: 'error', title: 'สูตรไม่สามารถเดินเครื่องได้',
+                    text: `ส่วนผสมบางถังน้อยหรือมากเกินไป ทำให้ Flow rate อยู่นอกช่วง 0.5 - 20 t/h`
+                });
+            }
+
+            const optimalRunRate = allowedMaxTotalRate; 
+            const totalHours = targetTotal / optimalRunRate;
+            
+            currentConfig = { targetTotal, totalRate: optimalRunRate, totalHours, tanks: [] };
+            const tbody = document.getElementById('resultTableBody');
+            tbody.innerHTML = '';
+
+            recipe.forEach(t => {
+                if (t.percent > 0) {
+                    let tankRate = optimalRunRate * (t.percent / 100);
+                    let tankWeight = targetTotal * (t.percent / 100);
+                    let valveOpenPercent = (tankRate / MAX_TANK_OUTPUT) * 100; // คำนวณ % การเปิดปากถัง
+
+                    currentConfig.tanks.push({ id: t.id, percent: t.percent, rate: tankRate, targetWeight: tankWeight, valveOpenPercent: valveOpenPercent });
+
+                    tbody.innerHTML += `
+                        <tr class="bg-white border-b">
+                            <td class="p-2 border text-center font-semibold">ถัง ${t.id}</td>
+                            <td class="p-2 border text-center">${t.percent}%</td>
+                            <td class="p-2 border text-center font-mono text-green-600">${tankRate.toFixed(2)}</td>
+                            <td class="p-2 border text-center font-bold text-blue-600">${valveOpenPercent.toFixed(1)}%</td>
+                            <td class="p-2 border text-center">${tankWeight.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            document.getElementById('resTotalRate').innerText = `${optimalRunRate.toFixed(2)} t/h`;
+            let hrs = Math.floor(totalHours);
+            let mins = Math.round((totalHours - hrs) * 60);
+            document.getElementById('resTime').innerText = `${hrs} ชม. ${mins} นาที`;
+
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('simulationSection').classList.add('hidden');
+            clearInterval(simInterval);
+            Swal.fire({ icon: 'success', title: 'คำนวณสำเร็จ', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        }
+
+        function startSimulation() {
+            if (!currentConfig) return;
+            document.getElementById('simulationSection').classList.remove('hidden');
+            
+            // Build Visual Tanks (Hoppers + Valve)
+            const container = document.getElementById('simBarsContainer');
+            container.innerHTML = '';
+            
+            currentConfig.tanks.forEach(t => {
+                let doorWidth = 50 - (t.valveOpenPercent / 2); // คำนวณความกว้างประตูวาล์วที่ปิดอยู่ (แต่ละข้าง)
+
+                container.innerHTML += `
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700 flex flex-col items-center shadow-lg relative">
+                        <div class="w-full flex justify-between text-xs mb-3">
+                            <span class="font-bold text-slate-200">ถัง ${t.id}</span>
+                            <span class="text-blue-400">${t.percent}% สูตรรวม</span>
+                        </div>
+
+                        <!-- ตัวถังกรวย (Hopper) -->
+                        <div class="relative w-24 h-28 bg-slate-700 tank-hopper overflow-hidden border-b-2 border-slate-900">
+                            <!-- ระดับข้าวภายในถัง (จะลดลงเมื่อเวลาผ่านไป) -->
+                            <div id="simTankLevel_${t.id}" class="absolute bottom-0 w-full bg-amber-500/90 grain-level" style="height: 100%;"></div>
+                        </div>
+
+                        <!-- ชุดวาล์วเปิด-ปิดใต้ถัง -->
+                        <div class="w-16 h-3 bg-slate-900 flex justify-between relative mt-0.5 overflow-hidden rounded-sm">
+                            <div class="h-full bg-slate-400 valve-door" style="width: ${doorWidth}%"></div>
+                            <div class="h-full bg-slate-400 valve-door" style="width: ${doorWidth}%"></div>
+                        </div>
+                        <div class="text-[11px] text-green-400 mt-1 mb-2 font-mono">วาล์วเปิด: ${t.valveOpenPercent.toFixed(1)}%</div>
+
+                        <!-- อนิเมชันข้าวไหลลงมา (จะซ่อนเมื่อ Pause) -->
+                        <div class="h-10 relative flex justify-center w-full">
+                            <div id="simTankStream_${t.id}" class="bg-amber-400/80 flowing h-full transition-opacity duration-200 opacity-100" style="width: ${Math.max(t.valveOpenPercent * 0.4, 2)}px;"></div>
+                        </div>
+
+                        <!-- ขีดความก้าวหน้า (Accumulated Progress) -->
+                        <div class="w-full mt-2 bg-slate-900 p-2 rounded">
+                            <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
+                                <span id="simTankVal_${t.id}">0.00</span>
+                                <span>${t.targetWeight.toFixed(2)} t</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-700 rounded-full">
+                                <div id="simTankBar_${t.id}" class="h-full bg-green-500 rounded-full transition-all duration-100" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('simTargetWeight').innerText = currentConfig.targetTotal.toFixed(2);
+            
+            isPaused = false;
+            currentProgressRatio = 0;
+            updatePauseButtonUI();
+            updateModeBadge("AUTO");
+            toggleFlowStreams(true);
+
+            document.getElementById('simulationSection').scrollIntoView({ behavior: 'smooth' });
+
+            clearInterval(simInterval);
+            let currentTick = 0;
+
+            simInterval = setInterval(() => {
+                if (!isPaused) {
+                    currentTick++;
+                    currentProgressRatio = currentTick / totalTicks;
+                    
+                    if (currentProgressRatio >= 1) {
+                        currentProgressRatio = 1;
+                        updateUIElements(currentProgressRatio);
+                        clearInterval(simInterval);
+                        toggleFlowStreams(false);
+                        Swal.fire('Complete', 'ผสมข้าวเสร็จสมบูรณ์', 'success');
+                    } else {
+                        updateUIElements(currentProgressRatio);
+                    }
+                }
+            }, intervalMs);
+        }
+
+        function updateUIElements(ratio) {
+            let currentTotalWeight = 0;
+
+            currentConfig.tanks.forEach(t => {
+                let currentWeight = t.targetWeight * ratio;
+                currentTotalWeight += currentWeight;
+                
+                // อัปเดตตัวเลขและหลอดสะสมด้านล่าง
+                document.getElementById(`simTankVal_${t.id}`).innerText = currentWeight.toFixed(2);
+                document.getElementById(`simTankBar_${t.id}`).style.width = `${ratio * 100}%`;
+                
+                // อัปเดตระดับข้าวในถัง (ลดลงจาก 100% เหลือ 0%)
+                document.getElementById(`simTankLevel_${t.id}`).style.height = `${(1 - ratio) * 100}%`;
+            });
+
+            document.getElementById('simTotalWeight').innerText = currentTotalWeight.toFixed(2);
+            document.getElementById('simSlider').value = (ratio * 100).toFixed(1);
+            document.getElementById('sliderPercentLabel').innerText = `${(ratio * 100).toFixed(0)}%`;
+
+            let simTimeHours = currentConfig.totalHours * ratio;
+            let h = Math.floor(simTimeHours);
+            let m = Math.floor((simTimeHours - h) * 60);
+            let s = Math.floor(((simTimeHours - h) * 60 - m) * 60);
+            document.getElementById('simTimeLabel').innerText = `เวลาผ่านไป: ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')} ชม.`;
+        }
+
+        function toggleFlowStreams(isActive) {
+            // ควบคุมการแสดงผลของสายข้าวที่ไหลลงมา
+            currentConfig.tanks.forEach(t => {
+                const stream = document.getElementById(`simTankStream_${t.id}`);
+                if (stream) {
+                    // ถ้ายังไม่เสร็จ (ratio < 1) และ Active ให้แสดงสายข้าว
+                    if (isActive && currentProgressRatio < 1) {
+                        stream.classList.remove('opacity-0');
+                        stream.classList.add('opacity-100');
+                    } else {
+                        stream.classList.remove('opacity-100');
+                        stream.classList.add('opacity-0');
+                    }
+                }
+            });
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            updatePauseButtonUI();
+            
+            if (isPaused) {
+                updateModeBadge("PAUSED");
+                document.getElementById('simStatusLabel').innerText = "Simulation Paused";
+                document.getElementById('simStatusLabel').className = "text-2xl font-bold text-amber-400";
+                toggleFlowStreams(false); // หยุดการไหล
+            } else {
+                updateModeBadge("AUTO");
+                document.getElementById('simStatusLabel').innerText = "Simulation Running...";
+                document.getElementById('simStatusLabel').className = "text-2xl font-bold text-green-400";
+                toggleFlowStreams(true); // เล่นการไหลต่อ
+                
+                let currentTickEquivalent = Math.round(currentProgressRatio * totalTicks);
+                clearInterval(simInterval);
+                let currentTick = currentTickEquivalent;
+                
+                simInterval = setInterval(() => {
+                    if (!isPaused) {
+                        currentTick++;
+                        currentProgressRatio = currentTick / totalTicks;
+                        if (currentProgressRatio >= 1) {
+                            currentProgressRatio = 1;
+                            updateUIElements(currentProgressRatio);
+                            clearInterval(simInterval);
+                            toggleFlowStreams(false);
+                            Swal.fire('Complete', 'ผสมข้าวเสร็จสมบูรณ์', 'success');
+                        } else {
+                            updateUIElements(currentProgressRatio);
+                        }
+                    }
+                }, intervalMs);
+            }
+        }
+
+        function updatePauseButtonUI() {
+            const btn = document.getElementById('btnPause');
+            if (isPaused) {
+                btn.innerHTML = "▶ Resume";
+                btn.className = "px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium text-sm transition flex items-center gap-1";
+            } else {
+                btn.innerHTML = "⏸ Pause";
+                btn.className = "px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-medium text-sm transition flex items-center gap-1";
+            }
+        }
+
+        function handleSliderInput() {
+            if (!isPaused) {
+                isPaused = true;
+                updatePauseButtonUI();
+            }
+
+            updateModeBadge("MANUAL");
+            document.getElementById('simStatusLabel').innerText = "Manual Control Mode";
+            document.getElementById('simStatusLabel').className = "text-2xl font-bold text-blue-400";
+
+            currentProgressRatio = parseFloat(document.getElementById('simSlider').value) / 100;
+            updateUIElements(currentProgressRatio);
+            
+            // ในโหมดแมนนวล ถ้าลากไปจนสุด ให้ปิดสายข้าว ถ้ายังไม่สุดให้เห็นสายข้าวตามปกติ
+            toggleFlowStreams(currentProgressRatio < 1);
+        }
+
+        function updateModeBadge(mode) {
+            const badge = document.getElementById('modeBadge');
+            badge.innerText = mode;
+            if (mode === "AUTO") badge.className = "text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30";
+            else if (mode === "PAUSED") badge.className = "text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30";
+            else if (mode === "MANUAL") badge.className = "text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30";
+        }
+
+        function stopSimulationText() {
+            clearInterval(simInterval);
+            resetSimUI();
+            Swal.fire('Stopped', 'หยุดการจำลองการทำงานเรียบร้อยแล้ว', 'info');
+        }
+    </script>
+</body>
+</html>
