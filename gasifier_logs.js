@@ -1,22 +1,26 @@
 let editLogId = null;
 let currentLogData = []; 
 
-// 1. โหลดรายชื่อพนักงาน
+// 1. โหลดรายชื่อพนักงานมาสร้างเป็น Checkbox
 async function loadEmployees() {
     const { data, error } = await supabaseClient
         .from('employees')
         .select('name')
         .order('name', { ascending: true });
 
-    const select = document.getElementById('empSelect');
+    const container = document.getElementById('empCheckboxContainer');
     if (error) {
-        select.innerHTML = '<option disabled>โหลดข้อมูลไม่สำเร็จ</option>';
+        container.innerHTML = '<span class="text-red-500 text-sm">โหลดข้อมูลไม่สำเร็จ</span>';
         return;
     }
 
-    select.innerHTML = ''; 
+    container.innerHTML = ''; 
     data.forEach(emp => {
-        select.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
+        container.innerHTML += `
+        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-1 rounded">
+            <input type="checkbox" value="${emp.name}" class="emp-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+            <span class="text-gray-700">${emp.name}</span>
+        </label>`;
     });
 }
 
@@ -25,7 +29,7 @@ async function fetchData() {
     const { data, error } = await supabaseClient
         .from('gasifier_logs')
         .select('*')
-        .order('recorded_at', { ascending: false }); // ใช้ recorded_at ตาม Database
+        .order('recorded_at', { ascending: false }); 
     
     if (error) {
         Swal.fire('เกิดข้อผิดพลาด', error.message, 'error');
@@ -80,17 +84,17 @@ function prepareEdit(id) {
     document.getElementById('charcoal').value = item.charcoal !== null ? item.charcoal : '';
     document.getElementById('logNote').value = item.note !== null ? item.note : '';
 
-    const empSelect = document.getElementById('empSelect');
-    for (let i = 0; i < empSelect.options.length; i++) {
-        empSelect.options[i].selected = false;
-    }
+    // ล้าง Checkbox เก่าออกก่อน
+    const checkboxes = document.querySelectorAll('.emp-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
     
+    // ติ๊กถูกที่รายชื่อพนักงานที่เคยบันทึกไว้
     if (item.employees && item.employees.length > 0) {
-        for (let i = 0; i < empSelect.options.length; i++) {
-            if (item.employees.includes(empSelect.options[i].value)) {
-                empSelect.options[i].selected = true;
+        checkboxes.forEach(cb => {
+            if (item.employees.includes(cb.value)) {
+                cb.checked = true;
             }
-        }
+        });
     }
 
     const saveBtn = document.getElementById('saveBtn');
@@ -111,10 +115,9 @@ function cancelEdit() {
     document.getElementById('charcoal').value = '';
     document.getElementById('logNote').value = '';
     
-    const empSelect = document.getElementById('empSelect');
-    for (let i = 0; i < empSelect.options.length; i++) {
-        empSelect.options[i].selected = false;
-    }
+    // เอาติ๊กถูกออกทั้งหมด
+    const checkboxes = document.querySelectorAll('.emp-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
     
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.innerText = 'บันทึกข้อมูล';
@@ -133,8 +136,9 @@ async function saveData() {
     const charcoal = document.getElementById('charcoal').value;
     const note = document.getElementById('logNote').value;
     
-    const empSelect = document.getElementById('empSelect');
-    const selectedEmployees = Array.from(empSelect.selectedOptions).map(option => option.value);
+    // ค้นหา Checkbox ที่ถูกติ๊กเลือก และดึงค่า value (ชื่อ) ออกมา
+    const checkedBoxes = document.querySelectorAll('.emp-checkbox:checked');
+    const selectedEmployees = Array.from(checkedBoxes).map(cb => cb.value);
     
     if (!datetime || selectedEmployees.length === 0) {
         Swal.fire('แจ้งเตือน', 'กรุณากรอก วัน-เวลา และเลือกพนักงานอย่างน้อย 1 คน', 'warning');
@@ -154,7 +158,7 @@ async function saveData() {
         const { error } = await supabaseClient
             .from('gasifier_logs')
             .update(payload)
-            .eq('gasifier_id', editLogId); // อ้างอิงด้วย gasifier_id
+            .eq('gasifier_id', editLogId); 
             
         if (error) {
             Swal.fire('อัปเดตล้มเหลว', error.message, 'error');
