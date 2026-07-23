@@ -50,7 +50,7 @@
         <!-- Header -->
         <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold">Rice Blending Control System</h1>
-            <span class="text-sm bg-slate-700 px-3 py-1 rounded-full">Max Output: 30 t/h</span>
+            <span id="headerMaxOutput" class="text-sm bg-slate-700 px-3 py-1 rounded-full">Max Output: 30 t/h</span>
         </div>
 
         <div class="p-6">
@@ -60,6 +60,11 @@
                 <div class="col-span-1 bg-slate-50 p-4 rounded-lg border border-slate-200">
                     <h2 class="text-lg font-semibold mb-4 text-slate-700">1. ตั้งค่าการผลิต</h2>
                     
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Total Output (ตัน/ชม.)</label>
+                        <input type="number" id="maxTotalOutput" value="30" min="1" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="updateHeaderMaxOutput()">
+                    </div>
+
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">จำนวนถัง (1-8 ถัง)</label>
                         <select id="numTanks" class="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" onchange="generateTankInputs()">
@@ -183,7 +188,6 @@
     </div>
 
     <script>
-        const MAX_TOTAL_OUTPUT = 30; // t/h
         const MAX_TANK_OUTPUT = 20; // t/h
         const MIN_TANK_OUTPUT = 0.5; // t/h
 
@@ -201,6 +205,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             generateTankInputs();
         });
+
+        function updateHeaderMaxOutput() {
+            const maxOut = document.getElementById('maxTotalOutput').value || 0;
+            document.getElementById('headerMaxOutput').innerText = `Max Output: ${maxOut} t/h`;
+            resetSimUI();
+        }
 
         function generateTankInputs() {
             const numTanks = parseInt(document.getElementById('numTanks').value);
@@ -233,6 +243,8 @@
         function resetForm() {
             document.getElementById('targetTotal').value = 60;
             document.getElementById('numTanks').value = 8;
+            document.getElementById('maxTotalOutput').value = 30;
+            updateHeaderMaxOutput();
             generateTankInputs();
         }
 
@@ -247,7 +259,9 @@
         function calculateRecipe() {
             const numTanks = parseInt(document.getElementById('numTanks').value);
             const targetTotal = parseFloat(document.getElementById('targetTotal').value);
+            const MAX_TOTAL_OUTPUT = parseFloat(document.getElementById('maxTotalOutput').value);
             
+            if (!MAX_TOTAL_OUTPUT || MAX_TOTAL_OUTPUT <= 0) return Swal.fire('ข้อผิดพลาด', 'กรุณาระบุ Max Total Output ที่มากกว่า 0', 'error');
             if (!targetTotal || targetTotal <= 0) return Swal.fire('ข้อผิดพลาด', 'กรุณาระบุเป้าหมายการผลิตที่มากกว่า 0', 'error');
 
             let totalPercent = 0;
