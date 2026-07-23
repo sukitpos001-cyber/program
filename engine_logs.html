@@ -9,9 +9,10 @@
 </head>
 <body class="bg-gray-100 p-8 font-sans">
 
-    <!-- เมนูนำทาง (Navigation) ง่ายๆ -->
-    <div class="max-w-6xl mx-auto mb-4">
-        <a href="employees.html" class="text-blue-600 hover:underline mr-4">← กลับไปหน้าพนักงาน</a>
+    <!-- เมนูนำทาง (Navigation) -->
+    <div class="max-w-6xl mx-auto mb-4 flex gap-4">
+        <a href="index.html" class="text-blue-600 font-bold hover:underline">🏠 กลับหน้าหลัก</a>
+        <a href="employees.html" class="text-gray-500 hover:underline">← ไปหน้าพนักงาน</a>
     </div>
 
     <div class="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md">
@@ -24,7 +25,6 @@
                 <input type="datetime-local" id="logDatetime" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
             </div>
             
-            <!-- E1 -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">E1 (kWh)</label>
                 <input type="number" step="any" id="e1Kwh" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
@@ -34,7 +34,6 @@
                 <input type="number" step="any" id="e1H" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
             </div>
 
-            <!-- E2 -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2">E2 (kWh)</label>
                 <input type="number" step="any" id="e2Kwh" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
@@ -44,25 +43,22 @@
                 <input type="number" step="any" id="e2H" placeholder="0.00" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
             </div>
 
-            <!-- ดึงรายชื่อพนักงานมาแสดงใน Dropdown -->
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2">
-                    พนักงานผู้บันทึก * 
-                    <span class="text-xs text-red-500 font-normal ml-1">(กด Ctrl ค้างไว้เพื่อเลือกหลายคน)</span>
-                </label>
-                <select id="empSelect" multiple class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500 bg-white h-24">
-                    <option value="">-- กำลังโหลดรายชื่อ --</option>
-                </select>
+            <!-- กล่องแสดงรายชื่อพนักงานแบบ Checkbox -->
+            <div class="row-span-2">
+                <label class="block text-gray-700 text-sm font-bold mb-2">พนักงานผู้บันทึก *</label>
+                <div id="empCheckboxContainer" class="border rounded w-full p-3 text-gray-700 bg-white h-32 overflow-y-auto space-y-2 focus-within:border-blue-500">
+                    <span class="text-gray-400 text-sm">-- กำลังโหลดรายชื่อ --</span>
+                </div>
             </div>
             
-            <!-- Note (ขยายเต็ม 3 คอลัมน์) -->
-            <div class="md:col-span-2 lg:col-span-3">
+            <!-- Note -->
+            <div class="md:col-span-2">
                 <label class="block text-gray-700 text-sm font-bold mb-2">หมายเหตุ (Note)</label>
                 <input type="text" id="logNote" placeholder="รายละเอียดเพิ่มเติม..." class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
             </div>
         </div>
 
-        <div class="mb-8 flex gap-2">
+        <div class="mb-8 flex gap-2 mt-4">
             <button id="saveBtn" onclick="saveData()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded hover:bg-blue-700 transition duration-200">
                 บันทึกข้อมูล
             </button>
