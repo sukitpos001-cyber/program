@@ -2,29 +2,64 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>ทดสอบ CRUD Supabase</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    </style>
-    <link rel="icon" href="data:,">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการข้อมูลเชื้อเพลิง - บริษัท สยามโกลด์เอ็นเนอจี่ จำกัด</title>
+    <!-- เรียกใช้ Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- เรียกใช้ SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-    <h2>บันทึกข้อมูลเชื้อเพลิง (Fuel Types)</h2>
-    
-    <input type="text" id="fuelName" placeholder="ชื่อเชื้อเพลิง">
-    <input type="text" id="fuelDesc" placeholder="รายละเอียด">
-    <button onclick="addData()">บันทึกข้อมูล</button>
+<body class="bg-gray-100 p-8 font-sans">
 
-    <table>
-        <thead>
-            <tr><th>ชื่อ</th><th>รายละเอียด</th><th>จัดการ</th></tr>
-        </thead>
-        <tbody id="fuelTable"></tbody>
-    </table>
+    <!-- เมนูนำทาง (Navigation) -->
+    <div class="max-w-5xl mx-auto mb-4 flex gap-4">
+        <a href="index.html" class="text-blue-600 font-bold hover:underline">🏠 กลับหน้าหลัก</a>
+    </div>
 
-    <script src="script.js"></script>
+    <div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">จัดการข้อมูลเชื้อเพลิง (Fuel Types)</h2>
+        
+        <!-- ฟอร์มกรอกข้อมูล -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">ประเภทเชื้อเพลิง *</label>
+                <input type="text" id="fuelName" placeholder="เช่น ไม้สับ, กะลาปาล์ม" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">รายละเอียดเพิ่มเติม</label>
+                <input type="text" id="fuelDesc" placeholder="หมายเหตุ หรือรายละเอียดอื่นๆ" class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+
+        <div class="mb-8 flex gap-2">
+            <button id="saveBtn" onclick="saveData()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded hover:bg-blue-700 transition duration-200">
+                บันทึกข้อมูล
+            </button>
+            <button id="cancelBtn" onclick="cancelEdit()" class="bg-gray-400 text-white font-bold py-2 px-6 rounded hover:bg-gray-500 transition duration-200 hidden">
+                ยกเลิก
+            </button>
+        </div>
+
+        <!-- ตารางแสดงผล -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-800 text-white">
+                        <th class="p-3 border">ประเภทเชื้อเพลิง</th>
+                        <th class="p-3 border">รายละเอียด</th>
+                        <th class="p-3 border text-center w-40">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="fuelTable">
+                    <!-- ข้อมูลจะถูกดึงมาแสดงที่นี่ -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ลำดับการเรียกใช้ Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="fuel_types.js"></script>
 </body>
 </html>
